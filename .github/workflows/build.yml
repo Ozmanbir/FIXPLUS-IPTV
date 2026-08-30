@@ -19,7 +19,14 @@ jobs:
 
       - name: Extract ZIP
         run: |
-          unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB.zip -d project
+          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ZIP dosyası bulunamadı!"
+            exit 1
+          fi
+          echo "Bulunan ZIP: $ZIP_FILE"
+          mkdir -p project
+          unzip -q "$ZIP_FILE" -d project
 
       - name: Build APK
         working-directory: project
