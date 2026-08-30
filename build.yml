@@ -21,12 +21,13 @@ jobs:
         run: |
           unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB.zip -d project
 
-      - name: Build APK with Gradle
+      - name: Build APK
         working-directory: project
         run: |
-          gradle assembleDebug --stacktrace
+          chmod +x gradlew || true
+          ./gradlew assembleDebug --stacktrace
 
-      - name: Save APK
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FIXPLUS-IPTV-APK
