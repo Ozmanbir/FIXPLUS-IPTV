@@ -1,0 +1,33 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository indir
+        uses: actions/checkout@v4
+
+      - name: Java kurulumu
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: ZIP'i aç
+        run: |
+          unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB.zip -d project
+
+      - name: Gradle ile APK derle
+        working-directory: project
+        run: |
+          gradle assembleDebug --stacktrace
+
+      - name: APK'yı kaydet
+        uses: actions/upload-artifact@v4
+        with:
+          name: FIXPLUS-IPTV-APK
+          path: project/**/build/outputs/apk/**/*.apk
