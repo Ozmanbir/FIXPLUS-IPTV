@@ -17,27 +17,33 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      - name: Extract ZIP
+        run: |
+          mkdir -p project
+          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
+          echo "Bulunan ZIP: $ZIP_FILE"
+          unzip -q "$ZIP_FILE" -d project
+
       - name: Find Gradle project
         run: |
-          echo "Repository contents:"
-          find . -maxdepth 3 -type f | sort
-
-          GRADLEW=$(find . -type f -name gradlew | head -n 1)
+          echo "Gradle dosyaları aranıyor..."
+          GRADLEW=$(find project -type f -name "gradlew" | head -n 1)
 
           if [ -z "$GRADLEW" ]; then
             echo "HATA: gradlew bulunamadı!"
+            echo "Çıkarılan dosyalar:"
+            find project -maxdepth 4 -type f | head -200
             exit 1
           fi
 
           PROJECT_DIR=$(dirname "$GRADLEW")
-          echo "Gradle projesi bulundu: $PROJECT_DIR"
-
+          echo "Gradle bulundu: $GRADLEW"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
-          chmod +x "$GRADLEW"
 
       - name: Build APK
         working-directory: ${{ env.PROJECT_DIR }}
         run: |
+          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
