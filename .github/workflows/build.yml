@@ -1,4 +1,4 @@
-name: Build APK
+name: APK oluştur
 
 on:
   workflow_dispatch:
@@ -18,28 +18,69 @@ jobs:
           java-version: '17'
 
       - name: Extract ZIP
+        shell: bash
         run: |
+          set -e
+
+          ZIP_FILE="$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)"
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "HATA: ZIP dosyası bulunamadı!"
+            ls -la
+            exit 1
+          fi
+
           rm -rf project
           mkdir -p project
-          unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB-HAZIR.zip -d project
+          unzip -q "$ZIP_FILE" -d project
 
-      - name: Show project files
-        run: |
-          echo "Proje dosyaları:"
+          if [ -d "project/project" ]; then
+            shopt -s dotglob
+            mv project/project/* project/
+            rmdir project/project
+          fi
+
+          echo "Çıkarılan dosyalar:"
           find project -maxdepth 3 -type f | sort
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
+      - name: Find Gradle project
+        shell: bash
+        run: |
+          set -e
+
+          if [ ! -f "project/gradle/wrapper/gradle-wrapper.properties" ]; then
+            echo "HATA: Gradle wrapper bulunamadı!"
+            find project -maxdepth 5 -type f | sort
+            exit 1
+          fi
+
+      - name: Set Gradle 9.5.0
+        shell: bash
+        run: |
+          set -e
+
+          WRAPPER="project/gradle/wrapper/gradle-wrapper.properties"
+
+          sed -i 's#^distributionUrl=.*#distributionUrl=https\://services.gradle.org/distributions/gradle-9.5.0-bin.zip#' "$WRAPPER"
+
+          echo "Kullanılacak Gradle:"
+          grep "distributionUrl" "$WRAPPER"
+
+          chmod +x project/gradlew
+
+          cd project
+          ./gradlew --version
 
       - name: Build APK
-        working-directory: project
+        shell: bash
         run: |
-          gradle assembleDebug --stacktrace
+          set -e
+          cd project
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FIXPLUS-IPTV-APK
-          path: project/app/build/outputs/apk/**/*.apk
+          path: project/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
