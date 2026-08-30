@@ -17,30 +17,32 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract ZIP
-        run: |
-          mkdir -p project
-          unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB.zip -d project
-
       - name: Find Gradle project
         run: |
-          GRADLEW=$(find project -type f -name gradlew | head -n 1)
+          echo "Repository contents:"
+          find . -maxdepth 3 -type f | sort
+
+          GRADLEW=$(find . -type f -name gradlew | head -n 1)
+
           if [ -z "$GRADLEW" ]; then
-            echo "gradlew bulunamadı!"
-            find project -maxdepth 4 -type f | head -100
+            echo "HATA: gradlew bulunamadı!"
             exit 1
           fi
-          echo "Gradle bulundu: $GRADLEW"
-          echo "GRADLE_DIR=$(dirname "$GRADLEW")" >> "$GITHUB_ENV"
+
+          PROJECT_DIR=$(dirname "$GRADLEW")
+          echo "Gradle projesi bulundu: $PROJECT_DIR"
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          chmod +x "$GRADLEW"
 
       - name: Build APK
+        working-directory: ${{ env.PROJECT_DIR }}
         run: |
-          chmod +x "$GRADLE_DIR/gradlew"
-          cd "$GRADLE_DIR"
           ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FIXPLUS-IPTV-APK
-          path: project/**/build/outputs/apk/**/*.apk
+          path: |
+            ${{ env.PROJECT_DIR }}/**/build/outputs/apk/**/*.apk
