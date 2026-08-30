@@ -19,36 +19,27 @@ jobs:
 
       - name: Extract ZIP
         run: |
+          rm -rf project
           mkdir -p project
-          ZIP_FILE=$(find . -maxdepth 1 -type f -iname "*.zip" | head -n 1)
-          echo "Bulunan ZIP: $ZIP_FILE"
-          unzip -q "$ZIP_FILE" -d project
+          unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB-HAZIR.zip -d project
 
-      - name: Find Gradle project
+      - name: Show project files
         run: |
-          echo "Gradle dosyaları aranıyor..."
-          GRADLEW=$(find project -type f -name "gradlew" | head -n 1)
+          echo "Proje dosyaları:"
+          find project -maxdepth 3 -type f | sort
 
-          if [ -z "$GRADLEW" ]; then
-            echo "HATA: gradlew bulunamadı!"
-            echo "Çıkarılan dosyalar:"
-            find project -maxdepth 4 -type f | head -200
-            exit 1
-          fi
-
-          PROJECT_DIR=$(dirname "$GRADLEW")
-          echo "Gradle bulundu: $GRADLEW"
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
 
       - name: Build APK
-        working-directory: ${{ env.PROJECT_DIR }}
+        working-directory: project
         run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: FIXPLUS-IPTV-APK
-          path: |
-            ${{ env.PROJECT_DIR }}/**/build/outputs/apk/**/*.apk
+          path: project/app/build/outputs/apk/**/*.apk
