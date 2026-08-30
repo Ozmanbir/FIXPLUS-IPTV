@@ -8,25 +8,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Repository indir
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Java kurulumu
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: ZIP'i aç
+      - name: Extract ZIP
         run: |
           unzip -q FIXPLUS-IPTV-APK-PROJE-GITHUB.zip -d project
 
-      - name: Gradle ile APK derle
+      - name: Build APK with Gradle
         working-directory: project
         run: |
           gradle assembleDebug --stacktrace
 
-      - name: APK'yı kaydet
+      - name: Save APK
         uses: actions/upload-artifact@v4
         with:
           name: FIXPLUS-IPTV-APK
